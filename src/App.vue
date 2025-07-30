@@ -16,10 +16,11 @@ const shoppingList = ref([
   // { id: id++ , name: "Carrot", quantity: 7, done: false },
 ]);
 
+let itemToEditId = ref(null);
 let itemName = ref('');
 let itemQuantity = ref(0);
-
 let errorMessage = ref('');
+let isEdit = ref(false);
 
 const addItem = () => {
   if( itemName.value !== '' && itemQuantity.value > 0 ) {
@@ -40,7 +41,49 @@ const addItem = () => {
 }
 
 const removeItem = (itemId) => {
-  shoppingList.value = shoppingList.value.filter( item => item.id !== itemId )
+  if( itemId !== undefined ) shoppingList.value = shoppingList.value.filter( item => item.id !== itemId );
+}
+
+const setToEditItem = (itemId) => { 
+  if( itemId !== undefined ) {
+    const itemToEdit = shoppingList.value.find( item => item.id === itemId);
+    if( itemToEdit){
+      itemToEditId.value = itemToEdit.id;
+      itemName.value = itemToEdit.name;
+      itemQuantity.value = itemToEdit.quantity;
+      isEdit.value = true;
+    } else {
+      errorMessage.value = 'Item not found for editing.';
+      itemToEditId.value = null;
+      itemName.value = '';
+      itemQuantity.value = 0;
+      isEdit.value = false;
+    }
+
+
+  } else {
+    errorMessage.value = 'Item not found for editing.';
+  }
+}
+
+const editItem = ()=>{
+  if( itemName.value !== '' && itemQuantity.value > 0 && itemToEditId.value !== null ) {
+    const newItemName = itemName.value;
+    const newItemQuantity = itemQuantity.value;
+    
+    shoppingList.value[itemToEditId.value] = {
+      id: itemToEditId.value,
+      name: newItemName,
+      quantity: newItemQuantity,
+      done: false
+    }
+    itemName.value = '';
+    itemQuantity.value = 0;
+    itemToEditId.value = null;
+    isEdit.value = false;
+  } else {
+    errorMessage.value = 'Please fill in the item name and quantity before editing.';
+  }
 }
 
 </script>
@@ -68,9 +111,9 @@ const removeItem = (itemId) => {
                 class=" col-span-2 w-full py-2 px-2 bg-gray-200 focus:outline-yellow-400  " />
             </div>
             <button
-              @click="addItem"
+              @click="!isEdit ? addItem() : editItem() "
               class=" bg-yellow-500 text-white px-4 py-2  hover:bg-yellow-600 transition duration-300 ease-in-out hover:cursor-pointer">
-              Add
+              {{ !isEdit ? 'Add' : 'Edit'  }}
             </button>
           </div> 
         </div>
@@ -87,6 +130,16 @@ const removeItem = (itemId) => {
                   </div>
                 </div>
                 <div>
+
+                  <button 
+                    v-if="!item.done"
+                    @click="setToEditItem(item.id)"
+                    class="ml-2 bg-green-500 text-white rounded p-1 hover:bg-green-600 transition duration-300 ease-in-out hover:cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                  </button>
+
                   <button
                     @click="removeItem(item.id)"
                     class="ml-2 bg-gray-500 text-white rounded p-1 hover:bg-red-600 transition duration-300 ease-in-out hover:cursor-pointer">
